@@ -110,6 +110,7 @@ function direction(event) {
   for (let i = 0; i < valueKey.length; i++) {
     if (event.keyCode === valueKey[i]) gameLet.dir = i;
   }
+  drawGame();
 }
 const next = () => (gameLet.player = gameLet.player === 0 ? 1 : 0);
 const random = () => Math.floor(Math.random() * 6) + 1;
@@ -267,7 +268,7 @@ const gameOver = () => {
   styleText('white', '100px Arial');
   ctx.fillText(gameLet.play[player], ST_TEXT_X, ST_TEXT_Y);
   ctx.fillText('WINNER', ST_WIN_X, ST_WIN_Y);
-  clearInterval(game);
+  document.removeEventListener('keydown', direction);
 };
 
 const painting = (player) => {
@@ -341,4 +342,4 @@ function drawGame() {
     if (dir > 0 && space === false) controlDiceSix();
   }
 }
-let game = setInterval(drawGame, 500);
+drawGame();
