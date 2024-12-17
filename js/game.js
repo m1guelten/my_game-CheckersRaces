@@ -35,6 +35,17 @@ const ST_WIN_X = ST_TEXT_X - BOX;
 const ST_WIN_Y = ST_TEXT_Y * 2;
 const KOORD_DICE_X = 30;
 const KOORD_DICE_Y = 30;
+const MAX_NUMBER_MOVES = 32;
+const FULL_CIRCLE = 28;
+const MAX_MOVE_DOWN = 7;
+const MAX_MOVE_RIGHT = 14;
+const MAX_MOVE_UP = 21;
+const BIAS = 14;
+const NUMBER_FISHKA = 4;
+const DOZVIL_FISHKA = NUMBER_FISHKA * 2;
+const ST_DELTA = 6;
+const ST_DOZVIL = false;
+const MAX_ARREY_FISHKA = 1 + NUMBER_FISHKA * 3;
 const play = [
   'White',
   'Black',
@@ -54,35 +65,43 @@ const gameLet = {
   space: true,
   fishka: 'fishka_W',
 };
-const fishka_B = new Array(13);
-const fishka_W = new Array(13);
+const fishka_B = new Array(MAX_ARREY_FISHKA);
+const fishka_W = new Array(MAX_ARREY_FISHKA);
 const startFishka = (array) => {
   for (let i = 0; i < array.length; i++) {
-    if (i < 5) array[i] = 0;
-    else if (i < 9) array[i] = 6;
-    else array[i] = false;
+    if (i < NUMBER_FISHKA) array[i] = 0;
+    else if (i <= DOZVIL_FISHKA) array[i] = ST_DELTA;
+    else array[i] = ST_DOZVIL;
   }
 };
 
 startFishka(fishka_B);
 startFishka(fishka_W);
 
-const koordB = new Array(32);
-const koordW = new Array(32);
-
-for (let i = 0; i < koordB.length; i++) {
-  if (i < 8) koordB[i] = { x: ST_X, y: ST_Y + BOX * i };
-  else if (i < 15) koordB[i] = { x: ST_X + BOX * (i - 7), y: ST_Y + BOX * 7 };
-  else if (i < 22) koordB[i] = { x: ST_X + BOX * 7, y: ST_Y + BOX * (21 - i) };
-  else if (i < 29) koordB[i] = { x: ST_X + BOX * (28 - i), y: ST_Y };
-  else koordB[i] = { x: ST_X + BOX * (i - 28), y: ST_Y + BOX * (i - 28) };
+const koordB = new Array(MAX_NUMBER_MOVES);
+const koordW = new Array(MAX_NUMBER_MOVES);
+for (let i = 0; i <= FULL_CIRCLE; i++) {
+  if (i <= MAX_MOVE_DOWN) koordB[i] = { x: ST_X, y: ST_Y + BOX * i };
+  else if (i <= MAX_MOVE_RIGHT)
+    koordB[i] = {
+      x: ST_X + BOX * (i - MAX_MOVE_DOWN),
+      y: ST_Y + BOX * MAX_MOVE_DOWN,
+    };
+  else if (i <= MAX_MOVE_UP)
+    koordB[i] = {
+      x: ST_X + BOX * MAX_MOVE_DOWN,
+      y: ST_Y + BOX * (MAX_MOVE_UP - i),
+    };
+  else koordB[i] = { x: ST_X + BOX * (FULL_CIRCLE - i), y: ST_Y };
+  i < BIAS ? (koordW[i + BIAS] = koordB[i]) : (koordW[i - BIAS] = koordB[i]);
 }
-for (let i = 0; i < koordW.length; i++) {
-  if (i < 8) koordW[i] = { x: ST_X + BOX * 7, y: ST_Y + BOX * (7 - i) };
-  else if (i < 15) koordW[i] = { x: ST_X + BOX * (14 - i), y: ST_Y };
-  else if (i < 22) koordW[i] = { x: ST_X, y: ST_Y + BOX * (i - 14) };
-  else if (i < 29) koordW[i] = { x: ST_X + BOX * (i - 21), y: ST_Y + BOX * 7 };
-  else koordW[i] = { x: ST_X + BOX * (35 - i), y: ST_Y + BOX * (35 - i) };
+koordW[FULL_CIRCLE] = koordW[0];
+for (let i = 1; i < MAX_NUMBER_MOVES - FULL_CIRCLE; i++) {
+  koordB[i + FULL_CIRCLE] = { x: ST_X + BOX * i, y: ST_Y + BOX * i };
+  koordW[i + FULL_CIRCLE] = {
+    x: ST_X + BOX * (MAX_MOVE_DOWN - i),
+    y: ST_Y + BOX * (MAX_MOVE_DOWN - i),
+  };
 }
 
 document.addEventListener('keydown', direction);
@@ -111,8 +130,8 @@ const playChange = (func) => {
 };
 const testBeat = (colorB) => {
   let beat;
-  if (gameLet.move <= 14) beat = gameLet.move + 14;
-  else if (gameLet.move <= 28) beat = gameLet.move - 14;
+  if (gameLet.move <= BIAS) beat = gameLet.move + BIAS;
+  else if (gameLet.move <= FULL_CIRCLE) beat = gameLet.move - BIAS;
   else return;
   let beat2 = beat;
   if (beat === 28) beat2 = 0;
@@ -120,12 +139,12 @@ const testBeat = (colorB) => {
     if (beat === colorB[i] || beat2 === colorB[i]) {
       for (let j = i; j <= colorB[0]; j++) {
         colorB[j] = colorB[j + 1];
-        colorB[j + 4] = colorB[j + 5];
-        colorB[j + 8] = colorB[j + 9];
+        colorB[j + NUMBER_FISHKA] = colorB[j + NUMBER_FISHKA + 1];
+        colorB[j + DOZVIL_FISHKA] = colorB[j + DOZVIL_FISHKA + 1];
       }
       colorB[colorB[0]] = 0;
-      colorB[colorB[0] + 4] = 6;
-      colorB[colorB[0] + 8] = false;
+      colorB[colorB[0] + NUMBER_FISHKA] = ST_DELTA;
+      colorB[colorB[0] + DOZVIL_FISHKA] = ST_DOZVIL;
       colorB[0]--;
     }
   }
@@ -140,17 +159,17 @@ const bornChecker = (colorA, colorB) => {
   gameLet.dir = -1;
   gameLet.space = true;
   colorA[0]++;
-  colorA[colorA[0] + 8] = true;
+  colorA[colorA[0] + DOZVIL_FISHKA] = true;
   delta(colorA, colorB);
 };
 
 const newFishka = (colorA, colorB, dirN) => {
-  if (colorA[0] === 4) {
+  if (colorA[0] === NUMBER_FISHKA) {
     endNewFishka(colorA, colorB, dirN);
     return;
   } else if (colorA[0] === 0) {
     for (let i = 1; i <= colorB[0]; i++) {
-      if (colorB[i] === 14) {
+      if (colorB[i] === BIAS) {
         gameLet.move = 0;
         testBeat(colorB);
       }
@@ -160,8 +179,8 @@ const newFishka = (colorA, colorB, dirN) => {
   } else {
     let testDelta = 0;
     for (let i = 1; i <= colorA[0]; i++) {
-      if (colorA[i + 4] >= step) testDelta++;
-      if (colorA[i] === 0 || colorA[i] === 28) {
+      if (colorA[i + NUMBER_FISHKA] >= step) testDelta++;
+      if (colorA[i] === 0 || colorA[i] === FULL_CIRCLE) {
         endNewFishka(colorA, colorB, dirN);
         return;
       }
@@ -169,7 +188,7 @@ const newFishka = (colorA, colorB, dirN) => {
     space = false;
     if (testDelta === 0 || dirN === colorA[0] + 1) {
       for (let i = 1; i <= colorB[0]; i++) {
-        if (colorB[i] === 14) {
+        if (colorB[i] === BIAS) {
           move = 0;
           testBeat(colorB);
         }
@@ -178,45 +197,46 @@ const newFishka = (colorA, colorB, dirN) => {
       return;
     }
     if (dirN > 0) {
-      if (colorA[dirN + 8] === false) return;
+      if (colorA[dirN + DOZVIL_FISHKA] === false) return;
       endNewFishka(colorA, colorB, dirN);
     }
   }
 };
 const delta = (colorA, colorB) => {
   let min = 0;
-  let max = 32;
+  let max = MAX_ARREY_FISHKA;
   if (colorA[colorA[0]] === 0) {
-    max = 28;
+    max = FULL_CIRCLE;
     for (let i = 0; i < colorA[0]; i++) {
-      if (colorA[i] > 28) min++;
+      if (colorA[i] > FULL_CIRCLE) min++;
     }
   }
   if (min === 3) {
     min = 0;
-    max = 32;
+    max = MAX_ARREY_FISHKA;
   }
   for (let i = min + 2; i <= colorA[0]; i++) {
-    colorA[i + 4] = colorA[i - 1] - colorA[i] - 1;
+    colorA[i + NUMBER_FISHKA] = colorA[i - 1] - colorA[i] - 1;
   }
-  colorA[min + 5] = max - 1 - colorA[min + 1];
-  if (min > 0) colorA[5] = 31 - colorA[1];
+  colorA[min + NUMBER_FISHKA + 1] = max - colorA[min + 1] - 1;
+  if (min > 0) colorA[5] = MAX_NUMBER_MOVES - colorA[1] - 1;
   if (min === 2) colorA[6] = colorA[1] - colorA[2] - 1;
   for (let j = 1; j <= colorA[0]; j++) {
     for (let i = 1; i <= colorB[0]; i++) {
-      if (colorB[i] < 15) max = colorB[i] + 14 - colorA[j];
-      else if (colorB[i] < 29) max = colorB[i] - 14 - colorA[j];
-      if (max > 0 && max < colorA[j + 4]) colorA[j + 4] = max;
+      if (colorB[i] <= BIAS) max = colorB[i] + BIAS - colorA[j];
+      else if (colorB[i] <= FULL_CIRCLE) max = colorB[i] - BIAS - colorA[j];
+      if (max > 0 && max < colorA[j + NUMBER_FISHKA])
+        colorA[j + NUMBER_FISHKA] = max;
     }
   }
 };
 const testMoveFishka = (colorA) => {
-  if (testMove === 0) {
+  if (gameLet.testMove === 0) {
     for (let i = 1; i <= colorA[0]; i++) {
-      if (step <= colorA[i + 4]) {
-        colorA[i + 8] = true;
+      if (gameLet.step <= colorA[i + NUMBER_FISHKA]) {
+        colorA[i + DOZVIL_FISHKA] = true;
         testMove++;
-      } else colorA[i + 8] = false;
+      } else colorA[i + DOZVIL_FISHKA] = false;
     }
   }
 };
@@ -234,7 +254,7 @@ const run = (colorA, colorB, dirN = -1) => {
   if (gameLet.testMove === 0) next();
   if (gameLet.testMove === 1) {
     for (let i = 1; i <= colorA[0]; i++) {
-      if (colorA[i + 8] === true) {
+      if (colorA[i + DOZVIL_FISHKA] === true) {
         gameLet.move = colorA[i] + gameLet.step;
         testBeat(colorB);
         gameLet.move = colorA[i] + gameLet.step;
@@ -243,7 +263,7 @@ const run = (colorA, colorB, dirN = -1) => {
     endRun(colorA, colorB);
   }
   if (gameLet.testMove > 1 && dirN > 0) {
-    if (colorA[dirN + 8] === false) return;
+    if (colorA[dirN + DOZVIL_FISHKA] === false) return;
     gameLet.move = colorA[dirN] + gameLet.step;
     testBeat(colorB);
     colorA[dirN] += gameLet.step;
@@ -281,7 +301,7 @@ const painting = (player) => {
     );
   }
   for (let i = 1; i <= gameLet.fishka[0]; i++) {
-    if (gameLet.fishka[i + 8] === true && gameLet.space === false) {
+    if (gameLet.fishka[i + DOZVIL_FISHKA] === true && gameLet.space === false) {
       styleText(play[noPlayer], '20px Arial');
       ctx.fillText(
         i,
@@ -306,7 +326,11 @@ function drawGame() {
     KOORD_DICE_X,
     KOORD_DICE_Y
   );
-  if (fishka_B[4] === 28 || fishka_W[4] === 28) gameOver();
+  if (
+    fishka_B[NUMBER_FISHKA] === FULL_CIRCLE ||
+    fishka_W[NUMBER_FISHKA] === FULL_CIRCLE
+  )
+    gameOver();
   painting(gameLet.player);
   if (gameLet.fishka[0] === 0) {
     if (gameLet.dir === 0) {
