@@ -1,6 +1,8 @@
 'use strict';
+
 const canvas = document.getElementById('chess');
 const ctx = canvas.getContext('2d');
+
 const loadImages = (imageFiles) => {
   const images = new Map();
   for (const fileName of imageFiles) {
@@ -11,6 +13,7 @@ const loadImages = (imageFiles) => {
   }
   return images;
 };
+
 const spriteFiles = [
   'ground.jpg',
   'dices0.png',
@@ -23,7 +26,9 @@ const spriteFiles = [
   'checkersBlack.png',
   'checkersWhite.png',
 ];
+
 const sprites = loadImages(spriteFiles);
+
 const BOX = 80;
 const ST_NUM_X = BOX / 2 - 10;
 const ST_NUM_Y = BOX / 2;
@@ -47,6 +52,7 @@ const ST_KOORD = 0;
 const ST_DELTA = 32;
 const ST_DOZVIL = false;
 const MAX_ARREY_FISHKA = 1 + NUMBER_FISHKA * 3;
+
 const gameLet = {
   player: 0,
   step: 0,
@@ -55,6 +61,7 @@ const gameLet = {
   dir: -1,
   space: true,
 };
+
 const fishka_B = new Array(MAX_ARREY_FISHKA);
 const fishka_W = new Array(MAX_ARREY_FISHKA);
 
@@ -62,9 +69,10 @@ const fishka_W = new Array(MAX_ARREY_FISHKA);
 //fishka_B(W)[1-4] -KoordFishka(1-4)
 //fishka_B(W)[5-8] -DeltaFishka(1-4)
 //fishka_B(W)[9-12]-DozvilFishka(1-4)
+
 const startFishka = (array) => {
   for (let i = 0; i < array.length; i++) {
-    if (i < NUMBER_FISHKA) array[i] = ST_DELTA;
+    if (i <= NUMBER_FISHKA) array[i] = ST_KOORD;
     else if (i <= DOZVIL_FISHKA) array[i] = ST_DELTA;
     else array[i] = ST_DOZVIL;
   }
@@ -75,6 +83,7 @@ startFishka(fishka_W);
 
 const koordB = new Array(MAX_NUMBER_MOVES);
 const koordW = new Array(MAX_NUMBER_MOVES);
+
 for (let i = 0; i <= FULL_CIRCLE; i++) {
   if (i <= MAX_MOVE_DOWN) koordB[i] = { x: ST_X, y: ST_Y + BOX * i };
   else if (i <= MAX_MOVE_RIGHT)
@@ -107,27 +116,34 @@ function direction(event) {
   }
   drawGame();
 }
+
 const next = () => (gameLet.player = gameLet.player === 0 ? 1 : 0);
+
 const random = () => Math.floor(Math.random() * 6) + 1;
+
 const drive = () => {
   gameLet.step = random();
   gameLet.dir = -1;
 };
+
 const styleText = (color, font) => {
   ctx.fillStyle = color;
   ctx.font = font;
 };
+
 const playChange = (func) => {
   if (gameLet.player === 0) func(fishka_W, fishka_B, gameLet.dir);
   else func(fishka_B, fishka_W, gameLet.dir);
 };
+
 const testBeat = (colorB) => {
   let beat;
   if (gameLet.move <= BIAS) beat = gameLet.move + BIAS;
   else if (gameLet.move <= FULL_CIRCLE) beat = gameLet.move - BIAS;
   else return;
+
   let beat2 = beat;
-  if (beat === 28) beat2 = 0;
+  if (beat === FULL_CIRCLE) beat2 = 0;
   for (let i = 1; i <= colorB[0]; i++) {
     if (beat === colorB[i] || beat2 === colorB[i]) {
       for (let j = i; j <= colorB[0]; j++) {
@@ -173,7 +189,7 @@ const newFishka = (colorA, colorB, dirN) => {
   } else {
     let testDelta = 0;
     for (let i = 1; i <= colorA[0]; i++) {
-      if (colorA[i + NUMBER_FISHKA] >= step) testDelta++;
+      if (colorA[i + NUMBER_FISHKA] >= gameLet.step) testDelta++;
       if (colorA[i] === 0 || colorA[i] === FULL_CIRCLE) {
         endNewFishka(colorA, colorB, dirN);
         return;
@@ -190,6 +206,7 @@ const newFishka = (colorA, colorB, dirN) => {
     }
   }
 };
+
 const startDelta = (color) => {
   for (let j = 1; j <= color[0]; j++) {
     color[j + NUMBER_FISHKA] = ST_DELTA;
@@ -213,6 +230,7 @@ const findFriendEnemy = (colorA, colorB) => {
     max = MAX_NUMBER_MOVES;
   }
 };
+
 const delta = (colorA, colorB) => {
   startDelta(colorA);
   if (colorA[0] === 0) return;
@@ -230,16 +248,18 @@ const delta = (colorA, colorB) => {
   }
   if (colorB[0] !== 0) findFriendEnemy(colorA, colorB);
 };
+
 const testMoveFishka = (colorA) => {
   if (gameLet.testMove === 0) {
     for (let i = 1; i <= colorA[0]; i++) {
       if (gameLet.step <= colorA[i + NUMBER_FISHKA]) {
         colorA[i + DOZVIL_FISHKA] = true;
-        testMove++;
+        gameLet.testMove++;
       } else colorA[i + DOZVIL_FISHKA] = false;
     }
   }
 };
+
 const endRun = (colorA, colorB) => {
   gameLet.testMove = 0;
   delta(colorA, colorB);
@@ -257,7 +277,7 @@ const run = (colorA, colorB, dirN = -1) => {
       if (colorA[i + DOZVIL_FISHKA] === true) {
         gameLet.move = colorA[i] + gameLet.step;
         testBeat(colorB);
-        gameLet.move = colorA[i] + gameLet.step;
+        colorA[i] += gameLet.step;
       }
     }
     endRun(colorA, colorB);
@@ -275,26 +295,34 @@ const gameOver = () => {
   styleText('white', '100px Arial');
   ctx.fillText(gameLet.player === 0 ? 'Black' : 'White', ST_TEXT_X, ST_TEXT_Y);
   ctx.fillText('WINNER', ST_WIN_X, ST_WIN_Y);
+
   document.removeEventListener('keydown', direction);
+  gameLet.player = !gameLet.player;
 };
 
 const painting = (player) => {
   const koord = player === 0 ? koordW : koordB;
   const fishka = player === 0 ? fishka_W : fishka_B;
+
   styleText('white', '100px Arial');
-  ctx.fillText(player === 0 ? 'White' : 'Black', ST_TEXT_X, ST_TEXT_Y);
+  if (
+    fishka_B[NUMBER_FISHKA] != FULL_CIRCLE &&
+    fishka_W[NUMBER_FISHKA] != FULL_CIRCLE
+  )
+    ctx.fillText(player === 0 ? 'White' : 'Black', ST_TEXT_X, ST_TEXT_Y);
+
   for (let i = 1; i <= fishka_W[0]; i++) {
-    ctx.drawImage(
-      sprites.get('checkersBlack'),
-      koordB[fishka_B[i]].x,
-      koordB[fishka_B[i]].y
-    );
-  }
-  for (let i = 1; i <= gameLet.fishka_B[0]; i++) {
     ctx.drawImage(
       sprites.get('checkersWhite'),
       koordW[fishka_W[i]].x,
       koordW[fishka_W[i]].y
+    );
+  }
+  for (let i = 1; i <= fishka_B[0]; i++) {
+    ctx.drawImage(
+      sprites.get('checkersBlack'),
+      koordB[fishka_B[i]].x,
+      koordB[fishka_B[i]].y
     );
   }
   for (let i = 1; i <= fishka[0]; i++) {
@@ -329,10 +357,7 @@ function drawGame() {
       drive();
       controlDiceSix();
     }
-    if (gameLet.dir > 0 && gameLet.space === false) {
-      controlDiceSix();
-    }
-    if (dir > 0 && space === false) controlDiceSix();
+    if (gameLet.dir > 0 && gameLet.space === false) controlDiceSix();
   }
   ctx.drawImage(sprites.get('ground'), 0, 0);
   ctx.drawImage(
