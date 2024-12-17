@@ -50,44 +50,17 @@ let koord;
 let fishka;
 let move;
 let dir;
-const fishka_B = [
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  6,
-  6,
-  6,
-  6,
-  false,
-  false,
-  false,
-  false,
-];
-const fishka_W = [
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  6,
-  6,
-  6,
-  6,
-  false,
-  false,
-  false,
-  false,
-];
+const fishka_B = new Array(13);
+const fishka_W = new Array(13);
+const startFishka = (array) => {
+  for (let i = 0; i < array.length; i++) {
+    if (i < 5) array[i] = 0;
+    else if (i < 9) array[i] = 6;
+    else array[i] = false;
+  }
+};
+startFishka(fishka_B);
+startFishka(fishka_W);
 const koordB = [
   { x: 0, y: 0 },
   { x: 0, y: 1 },
