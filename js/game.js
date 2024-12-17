@@ -111,10 +111,7 @@ function direction(event) {
     if (event.keyCode === valueKey[i]) gameLet.dir = i;
   }
 }
-const next = () => {
-  if (gameLet.player === 0) gameLet.player = 1;
-  else gameLet.player = 0;
-};
+const next = () => (gameLet.player = gameLet.player === 0 ? 1 : 0);
 const random = () => Math.floor(Math.random() * 6) + 1;
 const drive = () => {
   gameLet.step = random();
